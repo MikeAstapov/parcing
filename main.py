@@ -9,7 +9,7 @@ for i in range(1, 99):
     if not os.path.exists("data"):
         os.mkdir('data')
     count+=1
-    url = f"https://www.film.ru/a-z/movies/2021/ajax?page={i}&js=true"  # Для парсинга изменить год фильмов в ссылке!!
+    url = f"https://www.film.ru/a-z/movies/2024/ajax?page={i}&js=true"  # Для парсинга изменить год фильмов в ссылке!!
     words = url.split('/')
     r = requests.get(url)
     json_data = json.loads(r.text)
@@ -43,4 +43,4 @@ for i in range(1, 99):
         for i in film_list_2:
             count += 1
             print(f'#{count} успешно записан')
-    print('[INFO]   DONE!')
+print('[INFO]   DONE!')
