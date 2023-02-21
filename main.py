@@ -9,7 +9,7 @@ for i in range(1, 99):
     if not os.path.exists("data"):
         os.mkdir('data')
     count+=1
-    url = f"https://www.film.ru/a-z/movies/2024/ajax?page={i}&js=true"  # Для парсинга изменить год фильмов в ссылке!!
+    url = f"https://www.film.ru/a-z/movies/2022/ajax?page={i}&js=true"  # Для парсинга изменить год фильмов в ссылке!!
     words = url.split('/')
     r = requests.get(url)
     json_data = json.loads(r.text)
@@ -17,7 +17,7 @@ for i in range(1, 99):
     with open(f'data/index_{words[5]}_{i}.html', 'w', encoding='utf-8') as file:
         file.write(html_responce)
 
-    with open(f"data/index_{i}.html", encoding='utf-8') as f:
+    with open(f"data/index_{words[5]}_{i}.html", encoding='utf-8') as f:
         src = f.read()
         soup = BeautifulSoup(src, 'lxml')
         all_films = soup.find_all('div', class_='film_list')
