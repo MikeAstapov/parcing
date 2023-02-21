@@ -28,7 +28,6 @@ for i in range(1, 99):
             film_year = film_infos[2].text
             film_jenre = film_infos[3].text
             film_grade = film_infos[4].text.strip().rstrip()
-            # film_grade_2 = film_infos[9].text.strip()
             film_eng_name = film_infos[0].text
 
             film_list_2.append({
