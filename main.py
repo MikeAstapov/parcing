@@ -1,45 +1,93 @@
 import json
-import os
+import datetime
 import requests
-from bs4 import BeautifulSoup
 
-film_list_2 = []
-count = 0
-for i in range(1, 99):
-    if not os.path.exists("data"):
-        os.mkdir('data')
-    count+=1
-    url = f"https://www.film.ru/a-z/movies/2022/ajax?page={i}&js=true"  # Для парсинга изменить год фильмов в ссылке!!
-    words = url.split('/')
-    r = requests.get(url)
-    json_data = json.loads(r.text)
-    html_responce = json_data[1]["data"]
-    with open(f'data/index_{words[5]}_{i}.html', 'w', encoding='utf-8') as file:
-        file.write(html_responce)
+headers = {
+    "Accept": "application/json, text/javascript, */*; q=0.01",
+    "X-Is-Ajax-Request": "X-Is-Ajax-Request",
+    "X-Requested-With": "XMLHttpRequest",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/103.0.0.0 Safari/537.36"
 
-    with open(f"data/index_{words[5]}_{i}.html", encoding='utf-8') as f:
-        src = f.read()
-        soup = BeautifulSoup(src, 'lxml')
-        all_films = soup.find_all('div', class_='film_list')
-        for i in all_films:
-            film_url = "https://www.film.ru/" + i.find(class_='film_list_link').get('href')
-            film_name = i.get('title')
-            film_infos = i.find_all('span')
-            film_year = film_infos[2].text
-            film_jenre = film_infos[3].text
-            film_grade = film_infos[4].text.strip().rstrip()
-            film_eng_name = film_infos[0].text
+}
 
-            film_list_2.append({
-                "Фильм": film_name,
-                "Ссылка": film_url,
-                "Год выпуска": film_year,
-                "Жанр": film_jenre})
+spisok = []
 
-    with open(f"data{words[5]}.json", 'w', encoding='utf-8') as file:
-        json.dump(film_list_2, file, indent=4, ensure_ascii=False)
 
-        for i in film_list_2:
-            count += 1
-            print(f'#{count} успешно записан')
-print('[INFO]   DONE!')
+def get_data():
+    start_time=datetime.datetime.now()
+
+    url = 'https://roscarservis.ru/catalog/legkovye/?sort%5Bprice%5D=asc&form_id=catalog_filter_form&filter_mode=params&filter_type=tires&diskType=1&arCatalogFilter_458_1500340406=Y&set_filter=Y&PAGEN_1=1'
+    r = requests.get(url=url, headers=headers)
+
+    # with open("index.html", 'w', encoding='utf-8') as file:
+    #     file.write(req.text)
+    # print(req.json())
+    # with open("r.json", 'w') as file:
+    #     json.dump(req.json(), file, indent=4, ensure_ascii=False )
+
+    pages_count = r.json()["pageCount"]
+    for page in range(1, pages_count+1):
+        url = f'https://roscarservis.ru/catalog/legkovye/?sort%5Bprice%5D=asc&form_id=catalog_filter_form&filter_mode=params&filter_type=tires&diskType=1&arCatalogFilter_458_1500340406=Y&set_filter=Y&PAGEN_1={page}'
+        r = requests.get(url=url, headers=headers)
+        data = r.json()
+        items = data['items']
+        possible_stores=["discountStores", "fortochkiStores", "commonStores"]
+
+        for item in items:
+            total_amount=0
+            item_name = item['name']
+            item_price = item['price']
+            item_img = 'https://roscarservis.ru/' + item['imgSrc']
+            item_url = 'https://roscarservis.ru/' + item['url']
+            stores=[]
+            for ps in possible_stores:
+                if ps in item:
+                    if item[ps] is None or len(item[ps]) <1 :
+                        continue
+                    else:
+                        for store in item[ps]:
+                            store_name=store['STORE_NAME']
+                            store_price=store["PRICE"]
+                            store_amount=store["AMOUNT"]
+                            total_amount+=int(store["AMOUNT"])
+
+                            stores.append({
+                                "store_name" : store_name,
+                                "store_price": store_price,
+                                "store_amount": store_amount
+
+                            })
+
+
+
+
+
+
+
+
+
+
+            spisok.append({
+                "Name": item_name,
+                "Price": item_price,
+                "IMG": item_img,
+                "URL": item_url,
+                "Stores": stores,
+                "total_amount": total_amount
+
+    })
+        print(f'[INFO] ОБРАБОТАНА СТРАНИЦА {page} ИЗ {pages_count}')
+    cur_time = datetime.datetime.now().strftime("%D_%M_%Y_%H")
+
+    with open(f"spisok.json", 'w', encoding='utf-8') as file:
+        json.dump(spisok, file, indent=4, ensure_ascii=False)
+    diff_time=datetime.datetime.now()-start_time
+    print(diff_time)
+
+
+def main():
+    get_data()
+
+
+if __name__ == "__main__":
+    main()
